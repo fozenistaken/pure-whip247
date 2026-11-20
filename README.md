@@ -4,6 +4,17 @@ Every 24/7 and LTD store in GTA V, shopped by hand on the [WHIP](https://whipfx.
 off the game's own racks, carry them in your hands or in a wire basket from the stack by the door, and pay the clerk
 in cash or by card. No shop screen: you walk the aisles.
 
+[![Pure 24/7 trailer: click to watch](docs/trailer.jpg)](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/pure-247-trailer.mp4)
+
+**[▶ Watch the trailer](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/pure-247-trailer.mp4)**
+(rendered from the resource's own animations in GTA's own 24/7)
+
+| Take a basket off the stack | Pick goods off the racks |
+|---|---|
+| ![Taking a basket off the stack](docs/take.gif) | ![Taking a can off the rack into the basket](docs/aisle.gif) |
+| **Ask the clerk for cigarettes** | **Pay, and the goods go in your pockets** |
+| ![The clerk takes a pack off the rack behind the counter and hands it over](docs/clerk.gif) | ![Paying at the till](docs/pay.gif) |
+
 ## What it does
 
 - **All 14 stores.** The nine 24/7 Supermarkets and five LTD Gasoline stations of GTA V, each with a clerk behind the
