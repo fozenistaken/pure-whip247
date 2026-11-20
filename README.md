@@ -1,13 +1,13 @@
-# Pure 24/7 for WHIP
+# whip-247 by PureFX
 
 Every 24/7 and LTD store in GTA V, shopped by hand on the [WHIP](https://whipfx.net) FiveM framework. Take the goods
 off the game's own racks, carry them in your hands or in a wire basket from the stack by the door, and pay the clerk
 in cash or by card. No shop screen: you walk the aisles.
 
-[![Pure 24/7 trailer: click to watch](docs/trailer.jpg)](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/pure-247-trailer.mp4)
+[![whip-247 trailer: click to watch](docs/trailer.jpg)](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/whip-247-trailer.mp4)
 
-**[▶ Watch the trailer](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/pure-247-trailer.mp4)**
-(rendered from the resource's own animations in GTA's own 24/7)
+**[▶ Watch the trailer](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/whip-247-trailer.mp4)**
+(rendered in Blender from the resource's own animations, in GTA's own 24/7)
 
 | Take a basket off the stack | Pick goods off the racks |
 |---|---|
