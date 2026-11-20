@@ -32,7 +32,13 @@ The trailer is rendered in Blender from the resource's own animations, in GTA's 
   WHIP's emote.
 - **Paying.** WHIP's `ChargePlayer` takes the money and refunds whatever does not fit in your pockets. After paying,
   the goods go from the basket into your pockets and the basket goes back on the stack.
-- **Leaving without paying.** Walk out with a basket and what you have not paid for goes back on the shelves.
+- **Shoplifting.** Walk out of the door without paying and you keep the goods, but the clerk reacts at random: shouts
+  after you, cowers behind the counter, or runs after you and beats you up. Some of the time the clerk calls the
+  police: with [pure-whip-police](https://github.com/fozenistaken/pure-whip-police) on the server, on-duty officers
+  get a "Shoplifting at a 24/7" call with what was taken. All of it is tuned in `Config.Shoplift` (reaction weights,
+  chase distance and time, the call's chance and delay); `enabled = false` puts the goods back on the shelves instead.
+  The clerk can only be hurt while reacting. Kill the clerk and that store closes for `Config.ClerkDownMinutes` (10)
+  until a new clerk takes over.
 - **About 40 groceries.** Drinks, snacks, food, home goods and cigarettes, each with its picture. What food and drinks
   restore (hunger, thirst) is changed in game in `/whip` → Economy → Items.
 - **Safe by design.** Every request is a WHIP `SecureEvent` with rate limits and checked parameters. The client sends

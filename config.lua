@@ -4,6 +4,7 @@
 Config = {}
 
 Config.Keeper = 'mp_m_shopkeep_01'       -- who stands behind every counter
+Config.ClerkDownMinutes = 10              -- a store whose clerk is killed stays closed this long, then a new clerk comes (1-60)
 Config.Blip = { sprite = 52, color = 2 }  -- 0 sprite = no map icon
 
 -- The stores: every convenience store in GTA V, where its shopkeeper stands (behind the tills, facing the customers).
@@ -136,6 +137,27 @@ Config.Shelves = {
     -- Without a basket the hands carry a little: two small things (one in each hand) or one of these big ones.
     handUnits = 2,
     bigItems = { 'pure-247_pizza', 'pure-247_detergent' },
+}
+
+-- Shoplifting: walk out of the door with goods you have not paid for and you keep them; the clerk reacts, and the
+-- police may get a call. enabled = false puts the goods back on the shelves as you leave instead.
+Config.Shoplift = {
+    enabled = true,
+    doorMeters = 16.0,    -- metres from the clerk that count as gone (16-24; the farthest product is 10 m away in a 24/7, 13 m in an LTD)
+    -- How the clerk reacts, picked at random by these weights (0 turns one off): shout at you, cower behind the
+    -- counter, run after you and beat you up (fists; never a downed player), or do nothing.
+    reactions = { shout = 45, cower = 25, chase = 20, nothing = 10 },
+    chaseMeters = 30.0,   -- how far from the counter the clerk chases (10-60)
+    chaseSeconds = 20,    -- how long the clerk keeps after you before walking back (5-60)
+    police = {
+        resource = 'pure-whip-police',  -- the police resource that takes the call (SendAlert); false: never call
+        chance = 0.7,                   -- chance the clerk calls it in, 0-1 (0.7 = 7 times in 10)
+        -- seconds before the call, per reaction: a shout is called in at once, a cowering clerk waits till you've gone
+        delay = { shout = 5, cower = 25, chase = 3, nothing = 40 },
+        cooldown = 60,                  -- seconds before the same store can call again (30-600)
+        code = '10-31',                 -- the call's code on the police MDT (pure-whip-police has no shoplifting code of its own)
+        priority = 'normal',            -- 'low', 'normal', 'high' or 'critical'
+    },
 }
 
 -- Where each store's room is in the world (from the game's own map: its v_shop_247 or v_gasstation interior), so

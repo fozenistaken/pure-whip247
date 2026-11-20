@@ -109,8 +109,18 @@ local function finish(started, ms)
     busy = false
 end
 
+local function closed(store)
+    local list = GlobalState['pure-247:closed']
+    local t = type(list) == 'table' and list[store]
+    if t and GetCloudTimeAsInt() < t then
+        exports.whip_core:Notify('The store is closed: the clerk is down', 'error')
+        return true
+    end
+    return false
+end
+
 local function grab(store, index, coords)
-    if busy then return end
+    if busy or closed(store) then return end
     busy = true
     local ped = PlayerPedId()
     local dz = coords.z - GetEntityCoords(ped).z
@@ -152,7 +162,7 @@ local function standForTake(stand)
 end
 
 local function takeBasket(store, stand)
-    if busy then return end
+    if busy or closed(store) then return end
     busy = true
     local ready
     if holdingBasket() then ready = faceFor(stand) else ready = standForTake(stand) end
@@ -349,6 +359,12 @@ RegisterNetEvent('pure-247:receive', function(netId, giveMs)
     Wait(math.max(0, ms - 120))
     if hanging() then play(carryPose(), true, true) end
     busy = false
+end)
+
+RegisterNetEvent('pure-247:clerkSpeak', function(netId, line)
+    if type(line) ~= 'string' or not NetworkDoesNetworkIdExist(netId) then return end
+    local clerk = NetToPed(netId)
+    if DoesEntityExist(clerk) then PlayPedAmbientSpeechNative(clerk, line, 'SPEECH_PARAMS_FORCE_SHOUTED') end
 end)
 
 RegisterNetEvent('pure-247:smoke', function(emote)

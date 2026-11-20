@@ -42,6 +42,79 @@ function ClerkCounter()
 end
 ClerkAsk = function(src, storeKey, item) return ask(src, storeKey, item) end
 
+local function pick(weights)
+    local total = 0
+    for _, w in pairs(weights) do total = total + math.max(0, tonumber(w) or 0) end
+    if total <= 0 then return 'nothing' end
+    local r = math.random() * total
+    for _, mode in ipairs({ 'shout', 'cower', 'chase', 'nothing' }) do
+        r = r - math.max(0, tonumber(weights[mode]) or 0)
+        if r <= 0 then return mode end
+    end
+    return 'nothing'
+end
+
+local function speak(st, netId, line)
+    local at = vector3(st.pos.x, st.pos.y, st.pos.z)
+    for _, id in ipairs(GetPlayers()) do
+        local ped = GetPlayerPed(id)
+        if ped ~= 0 and #(GetEntityCoords(ped) - at) < 60.0 then
+            TriggerClientEvent('pure-247:clerkSpeak', tonumber(id), netId, line)
+        end
+    end
+end
+
+local function settle(storeKey, c, patch)
+    if Clerks[storeKey] ~= c then return end
+    patch.conditions = patch.conditions or {}
+    patch.conditions.invincible = true
+    Whip.core:SetNpcState(c.npcId, patch)
+    busy[storeKey] = nil
+end
+
+function ClerkReact(storeKey, src)
+    local S = Config.Shoplift
+    local c, st = Clerks[storeKey], Rooms.store(storeKey)
+    if not c or not st or busy[storeKey] or not StoreOpen(storeKey) then return 'nothing' end
+    local mode = pick(S.reactions or {})
+    if mode == 'nothing' then return mode end
+    busy[storeKey] = true
+    Whip.core:SetNpcState(c.npcId, { conditions = { invincible = false } })
+    if mode == 'shout' then
+        Whip.core:SetNpcState(c.npcId, { anim = { dict = 'mp_am_hold_up', clip = 'wary_loop' } })
+        speak(st, c.netId, 'GENERIC_INSULT_HIGH')
+        exports.whip_core:NotifyPlayer(src, 'The clerk yells: "Hey! You didn\'t pay for that!"', 'error')
+        CreateThread(function()
+            Wait(6000)
+            settle(storeKey, c, { anim = false })
+        end)
+    elseif mode == 'cower' then
+        Whip.core:SetNpcState(c.npcId, { anim = { dict = 'mp_am_hold_up', clip = 'cower_loop' } })
+        speak(st, c.netId, 'GENERIC_FRIGHTENED_HIGH')
+        CreateThread(function()
+            Wait(15000)
+            settle(storeKey, c, { anim = false })
+        end)
+    else
+        local ok, why = Whip.core:SetNpcState(c.npcId, { conditions = { canMove = true }, hostileTo = { people = { src } },
+            range = math.max(10.0, math.min(60.0, S.chaseMeters or 30.0)), pace = 'run' })
+        if not ok then
+            print(('^3[pure-247] clerk of %s cannot chase: %s^7'):format(storeKey, tostring(why)))
+            settle(storeKey, c, {})
+            return 'nothing'
+        end
+        speak(st, c.netId, 'GENERIC_INSULT_HIGH')
+        exports.whip_core:NotifyPlayer(src, 'The clerk comes after you!', 'error')
+        CreateThread(function()
+            Wait(math.floor(math.max(5, math.min(60, S.chaseSeconds or 20)) * 1000))
+            Whip.core:SetNpcState(c.npcId, { hostileTo = false, range = false, pace = 'walk', post = st.pos })
+            Wait(15000)
+            settle(storeKey, c, { conditions = { canMove = false } })
+        end)
+    end
+    return mode
+end
+
 local function spawnOne(st)
     local npcId, netId = Whip.core:SpawnNpc({
         model = Config.Keeper, coords = st.pos, behaviour = 'stand',
@@ -55,12 +128,43 @@ local function spawnOne(st)
     end
 end
 
+local downUntil = {}
+
+function StoreOpen(storeKey)
+    return not (downUntil[storeKey] and os.time() < downUntil[storeKey])
+end
+
+local function syncClosed()
+    local list = {}
+    for key, t in pairs(downUntil) do if os.time() < t then list[key] = t end end
+    GlobalState['pure-247:closed'] = list
+end
+
 local function spawnAll()
     for _, st in ipairs(Config.Stores) do
         local c = Clerks[st.key]
-        if not c or not exports.whip_core:GetNpc(c.npcId) then spawnOne(st) end
+        if StoreOpen(st.key) and (not c or not exports.whip_core:GetNpc(c.npcId)) then
+            downUntil[st.key] = nil
+            spawnOne(st)
+        end
     end
+    syncClosed()
 end
+
+AddEventHandler('whip_core:npc:killed', function(e)
+    if type(e) ~= 'table' then return end
+    for key, c in pairs(Clerks) do
+        if c.npcId == e.npcId then
+            Clerks[key] = nil
+            busy[key] = nil
+            downUntil[key] = os.time() + math.floor(math.max(1, math.min(60, Config.ClerkDownMinutes or 10)) * 60)
+            syncClosed()
+            if StoreClosed then StoreClosed(key) end
+            print(('[pure-247] the clerk of %s was killed: the store is closed for %d minutes'):format(key, math.floor(Config.ClerkDownMinutes or 10)))
+            return
+        end
+    end
+end)
 
 local function blips()
     if (Config.Blip.sprite or 0) <= 0 then return end

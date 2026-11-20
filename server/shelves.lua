@@ -134,6 +134,60 @@ local function dropBasket(src, why)
     if why then say(src, why) end
 end
 
+local lastCall = {}
+
+local function callPolice(store, mode, lines)
+    local P = Config.Shoplift.police
+    if not P or not P.resource or math.random() >= (tonumber(P.chance) or 0) then return end
+    if GetResourceState(P.resource) ~= 'started' then return end
+    local st = Rooms.store(store)
+    if not st then return end
+    local now = os.time()
+    if lastCall[store] and now - lastCall[store] < (tonumber(P.cooldown) or 60) then return end
+    lastCall[store] = now
+    local parts = {}
+    for i, l in ipairs(lines) do
+        if i > 4 then parts[#parts + 1] = ('+%d more'):format(#lines - 4) break end
+        parts[#parts + 1] = ('%d× %s'):format(l.qty, nameOf(l.item))
+    end
+    CreateThread(function()
+        Wait(math.floor((tonumber(P.delay and P.delay[mode]) or 10) * 1000))
+        local ok, err = pcall(function()
+            return exports[P.resource]:SendAlert({
+                code = P.code or '10-31', title = 'Shoplifting at a 24/7', priority = P.priority or 'normal',
+                coords = vector3(st.pos.x, st.pos.y, st.pos.z),
+                info = { (mode == 'chase' and 'The clerk is chasing someone who left without paying: '
+                          or 'The clerk saw someone leave without paying: ') .. table.concat(parts, ', ') },
+            })
+        end)
+        if not ok then print(('^3[pure-247] police call failed: %s^7'):format(tostring(err))) end
+    end)
+end
+
+local function steal(src, b)
+    local lines = priced(b)
+    baskets[src] = nil
+    syncGoods(src)
+    if clerkPts[src] then RefreshClerk(src) end
+    letGoBasket(src)
+    if S.showList then exports.whip_core:HidePlayerText(src) end
+    if #lines == 0 then return end
+    local kept = {}
+    for _, l in ipairs(lines) do
+        if exports.whip_core:AddItem(src, l.item, l.qty, nil, { reason = '24/7 shoplifted', noDrop = true }) then
+            kept[#kept + 1] = l
+        end
+    end
+    if #kept == 0 then
+        say(src, 'Your pockets are full: what you took went back on the shelves')
+        return
+    end
+    CreateThread(function()
+        Whip.core:LogActivity(src, 'pure-247_shoplift', { detail = ('%s: %d lines'):format(b.store, #kept) })
+    end)
+    callPolice(b.store, ClerkReact(b.store, src), kept)
+end
+
 local pay
 
 local function tillLabel(b)
@@ -194,6 +248,15 @@ local function dropClerk(src)
     clerkPts[src] = nil
 end
 
+function StoreClosed(store)
+    for src, b in pairs(baskets) do
+        if b.store == store then dropBasket(src, 'The clerk is down: the store is closed') end
+    end
+    for src, cur in pairs(clerkPts) do
+        if cur.store == store then dropClerk(src) end
+    end
+end
+
 local function showTill(src)
     local b = baskets[src]
     if b then RefreshClerk(src, b.store) end
@@ -202,6 +265,7 @@ end
 pay = function(src, option)
     local b = baskets[src]
     if not b then return false, 'Your basket is empty' end
+    if not StoreOpen(b.store) then return false, 'The store is closed: the clerk is down' end
     if option == 'empty' then
         dropBasket(src, 'You put everything back on the shelves')
         return true
@@ -304,6 +368,7 @@ Whip.register(function()
         params = { { 'store', 'string', 24 }, { 'index', 'id', 1, 200 } },
     }, function(src, _, store, index)
         if not Config.Rooms[store] or not inStore(src, store) then return false, 'You are not in that store' end
+        if not StoreOpen(store) then return false, 'The store is closed: the clerk is down' end
 
         goods[store] = goods[store] or Rooms.goodsAt(store)
         local g = goods[store][index]
@@ -318,6 +383,7 @@ Whip.register(function()
         params = { { 'store', 'string', 24 } },
     }, function(src, _, store)
         if not Config.Rooms[store] or not inStore(src, store) then return false, 'You are not in that store' end
+        if not StoreOpen(store) then return false, 'The store is closed: the clerk is down' end
         local b = baskets[src]
         finishAfter(src)
         if b and b.store == store then
@@ -372,13 +438,17 @@ Whip.register(function()
 end)
 
 CreateThread(function()
+    local SL = Config.Shoplift
     while true do
-        Wait(4000)
+        Wait(next(baskets) and 1000 or 4000)
         for src, b in pairs(baskets) do
             local st = Rooms.store(b.store)
             local ped = GetPlayerPed(src)
             if ped == 0 or not st then
                 dropBasket(src)
+            elseif SL and SL.enabled
+                and #(GetEntityCoords(ped) - vector3(st.pos.x, st.pos.y, st.pos.z)) > (SL.doorMeters or 16.0) then
+                steal(src, b)
             elseif #(GetEntityCoords(ped) - vector3(st.pos.x, st.pos.y, st.pos.z)) > (S.leaveMeters or 25) then
                 dropBasket(src, b.hand and 'You left the store: what you had not paid for went back on the shelves'
                     or 'You left the store: your basket went back on the shelves')
@@ -407,7 +477,7 @@ CreateThread(function()
             if ped ~= 0 then
                 local c = GetEntityCoords(ped)
                 for _, st in ipairs(Config.Stores) do
-                    if #(c - vector3(st.pos.x, st.pos.y, st.pos.z)) < 15.0 then
+                    if #(c - vector3(st.pos.x, st.pos.y, st.pos.z)) < 15.0 and StoreOpen(st.key) then
                         seen[src] = true
                         local cur = clerkPts[src]
 
