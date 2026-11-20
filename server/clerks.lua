@@ -72,7 +72,7 @@ local function settle(storeKey, c, patch)
     busy[storeKey] = nil
 end
 
-function ClerkReact(storeKey, src)
+function ClerkReact(storeKey, src, what)
     local S = Config.Shoplift
     local c, st = Clerks[storeKey], Rooms.store(storeKey)
     if not c or not st or busy[storeKey] or not StoreOpen(storeKey) then return 'nothing' end
@@ -80,6 +80,7 @@ function ClerkReact(storeKey, src)
     if mode == 'nothing' then return mode end
     busy[storeKey] = true
     Whip.core:SetNpcState(c.npcId, { conditions = { invincible = false } })
+    Shopper.startle(storeKey, 8)
     if mode == 'shout' then
         Whip.core:SetNpcState(c.npcId, { anim = { dict = 'mp_am_hold_up', clip = 'wary_loop' } })
         speak(st, c.netId, 'GENERIC_INSULT_HIGH')
@@ -106,7 +107,17 @@ function ClerkReact(storeKey, src)
         speak(st, c.netId, 'GENERIC_INSULT_HIGH')
         exports.whip_core:NotifyPlayer(src, 'The clerk comes after you!', 'error')
         CreateThread(function()
-            Wait(math.floor(math.max(5, math.min(60, S.chaseSeconds or 20)) * 1000))
+            local stop = GetGameTimer() + math.floor(math.max(5, math.min(60, S.chaseSeconds or 20)) * 1000)
+            while GetGameTimer() < stop and Clerks[storeKey] == c do
+                Wait(1000)
+                if Whip.core:IsPlayerDead(src) then
+                    local ped = GetPlayerPed(src)
+                    Police.call(storeKey, 'held', 'The clerk has the shoplifter on the ground outside: ' .. (what or 'goods'),
+                        0, ped ~= 0 and GetEntityCoords(ped) or nil)
+                    break
+                end
+            end
+            if Clerks[storeKey] ~= c then return end
             Whip.core:SetNpcState(c.npcId, { hostileTo = false, range = false, pace = 'walk', post = st.pos })
             Wait(15000)
             settle(storeKey, c, { conditions = { canMove = false } })
@@ -128,7 +139,7 @@ local function spawnOne(st)
     end
 end
 
-local downUntil = {}
+local downUntil = json.decode(GetResourceKvpString('closed') or '{}') or {}
 
 function StoreOpen(storeKey)
     return not (downUntil[storeKey] and os.time() < downUntil[storeKey])
@@ -137,33 +148,50 @@ end
 local function syncClosed()
     local list = {}
     for key, t in pairs(downUntil) do if os.time() < t then list[key] = t end end
+    downUntil = list
     GlobalState['pure-247:closed'] = list
+    SetResourceKvp('closed', json.encode(list))
 end
 
 local function spawnAll()
     for _, st in ipairs(Config.Stores) do
         local c = Clerks[st.key]
-        if StoreOpen(st.key) and (not c or not exports.whip_core:GetNpc(c.npcId)) then
-            downUntil[st.key] = nil
-            spawnOne(st)
+        if StoreOpen(st.key) then
+            if not c or not exports.whip_core:GetNpc(c.npcId) then spawnOne(st) end
+            Shopper.ensure(st)
         end
     end
     syncClosed()
 end
 
+local function clerkOf(npcId)
+    for key, c in pairs(Clerks) do
+        if c.npcId == npcId then return key, c end
+    end
+end
+
+local function witness() return tonumber(Config.Shopper and Config.Shopper.callDelay) or 10 end
+
+AddEventHandler('whip_core:npc:damaged', function(e)
+    if type(e) ~= 'table' then return end
+    local key = clerkOf(e.npcId)
+    if not key then return end
+    Shopper.startle(key, 20)
+    Police.call(key, 'attacked', 'A customer reports someone attacking the clerk', witness())
+end)
+
 AddEventHandler('whip_core:npc:killed', function(e)
     if type(e) ~= 'table' then return end
-    for key, c in pairs(Clerks) do
-        if c.npcId == e.npcId then
-            Clerks[key] = nil
-            busy[key] = nil
-            downUntil[key] = os.time() + math.floor(math.max(1, math.min(60, Config.ClerkDownMinutes or 10)) * 60)
-            syncClosed()
-            if StoreClosed then StoreClosed(key) end
-            print(('[pure-247] the clerk of %s was killed: the store is closed for %d minutes'):format(key, math.floor(Config.ClerkDownMinutes or 10)))
-            return
-        end
-    end
+    local key = clerkOf(e.npcId)
+    if not key then return end
+    Clerks[key] = nil
+    busy[key] = nil
+    downUntil[key] = os.time() + math.floor(math.max(1, math.min(60, Config.ClerkDownMinutes or 10)) * 60)
+    syncClosed()
+    if StoreClosed then StoreClosed(key) end
+    Shopper.startle(key, 30, true)
+    Police.call(key, 'killed', 'A customer reports the clerk is down and not moving', witness())
+    print(('[pure-247] the clerk of %s was killed: the store is closed for %d minutes'):format(key, math.floor(Config.ClerkDownMinutes or 10)))
 end)
 
 local function blips()
@@ -178,6 +206,7 @@ end
 
 Whip.register(function()
     Clerks = {}
+    Shopper.reset()
     blips()
     if #GetPlayers() > 0 then spawnAll() end
 end)

@@ -134,34 +134,13 @@ local function dropBasket(src, why)
     if why then say(src, why) end
 end
 
-local lastCall = {}
-
-local function callPolice(store, mode, lines)
-    local P = Config.Shoplift.police
-    if not P or not P.resource or math.random() >= (tonumber(P.chance) or 0) then return end
-    if GetResourceState(P.resource) ~= 'started' then return end
-    local st = Rooms.store(store)
-    if not st then return end
-    local now = os.time()
-    if lastCall[store] and now - lastCall[store] < (tonumber(P.cooldown) or 60) then return end
-    lastCall[store] = now
+local function listOf(lines)
     local parts = {}
     for i, l in ipairs(lines) do
         if i > 4 then parts[#parts + 1] = ('+%d more'):format(#lines - 4) break end
         parts[#parts + 1] = ('%d× %s'):format(l.qty, nameOf(l.item))
     end
-    CreateThread(function()
-        Wait(math.floor((tonumber(P.delay and P.delay[mode]) or 10) * 1000))
-        local ok, err = pcall(function()
-            return exports[P.resource]:SendAlert({
-                code = P.code or '10-31', title = 'Shoplifting at a 24/7', priority = P.priority or 'normal',
-                coords = vector3(st.pos.x, st.pos.y, st.pos.z),
-                info = { (mode == 'chase' and 'The clerk is chasing someone who left without paying: '
-                          or 'The clerk saw someone leave without paying: ') .. table.concat(parts, ', ') },
-            })
-        end)
-        if not ok then print(('^3[pure-247] police call failed: %s^7'):format(tostring(err))) end
-    end)
+    return table.concat(parts, ', ')
 end
 
 local function steal(src, b)
@@ -185,7 +164,13 @@ local function steal(src, b)
     CreateThread(function()
         Whip.core:LogActivity(src, 'pure-247_shoplift', { detail = ('%s: %d lines'):format(b.store, #kept) })
     end)
-    callPolice(b.store, ClerkReact(b.store, src), kept)
+    local what = listOf(kept)
+    local mode = ClerkReact(b.store, src, what)
+    local P = Config.Shoplift.police
+    if P and math.random() < (tonumber(P.chance) or 0) then
+        Police.call(b.store, 'theft', (mode == 'chase' and 'The clerk is chasing someone who left without paying: '
+            or 'The clerk saw someone leave without paying: ') .. what, P.delay and P.delay[mode] or 10)
+    end
 end
 
 local pay
@@ -447,7 +432,8 @@ CreateThread(function()
             if ped == 0 or not st then
                 dropBasket(src)
             elseif SL and SL.enabled
-                and #(GetEntityCoords(ped) - vector3(st.pos.x, st.pos.y, st.pos.z)) > (SL.doorMeters or 16.0) then
+                and #(GetEntityCoords(ped) - vector3(st.pos.x, st.pos.y, st.pos.z)) > (SL.doorMeters or 16.0)
+                and Police.enough() then
                 steal(src, b)
             elseif #(GetEntityCoords(ped) - vector3(st.pos.x, st.pos.y, st.pos.z)) > (S.leaveMeters or 25) then
                 dropBasket(src, b.hand and 'You left the store: what you had not paid for went back on the shelves'

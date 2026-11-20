@@ -157,7 +157,22 @@ Config.Shoplift = {
         cooldown = 60,                  -- seconds before the same store can call again (30-600)
         code = '10-31',                 -- the call's code on the police MDT (pure-whip-police has no shoplifting code of its own)
         priority = 'normal',            -- 'low', 'normal', 'high' or 'critical'
+        violentCode = '10-10',          -- the code of the calls when the clerk is attacked or killed (always sent, high priority)
+        -- Shoplifting only works with at least this many officers on duty in these WHIP jobs; with fewer, goods you
+        -- walk out with go back on the shelves. 0 = no minimum (e.g. 2, with { 'lspd', 'bcso' })
+        minOnDuty = 2,
+        jobs = { 'lspd', 'bcso' },      -- the WHIP jobs counted as police (pure-whip-police's departments)
     },
+}
+
+-- A shopper in every open store: walks from rack to rack, cowers when the clerk is attacked, and is the witness who
+-- calls the police when the clerk is attacked or killed. Cannot be hurt.
+Config.Shopper = {
+    enabled = true,
+    models = { 'a_f_y_hipster_01', 'a_m_y_hipster_01', 'a_f_m_bevhills_01', 'a_m_m_business_01', 'a_f_y_business_01' },   -- picked at random per store
+    pauseSeconds = { 8, 20 },   -- how long the shopper stays at a rack before walking to the next (3-60)
+    rackGap = 0.75,             -- metres between the goods and where the shopper stands (0.6-1.2)
+    callDelay = 10,             -- seconds before the shopper's call reaches the police (0-60)
 }
 
 -- Where each store's room is in the world (from the game's own map: its v_shop_247 or v_gasstation interior), so

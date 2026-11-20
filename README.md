@@ -35,10 +35,16 @@ The trailer is rendered in Blender from the resource's own animations, in GTA's 
 - **Shoplifting.** Walk out of the door without paying and you keep the goods, but the clerk reacts at random: shouts
   after you, cowers behind the counter, or runs after you and beats you up. Some of the time the clerk calls the
   police: with [pure-whip-police](https://github.com/fozenistaken/pure-whip-police) on the server, on-duty officers
-  get a "Shoplifting at a 24/7" call with what was taken. All of it is tuned in `Config.Shoplift` (reaction weights,
-  chase distance and time, the call's chance and delay); `enabled = false` puts the goods back on the shelves instead.
-  The clerk can only be hurt while reacting. Kill the clerk and that store closes for `Config.ClerkDownMinutes` (10)
-  until a new clerk takes over.
+  get a "Shoplifting at a 24/7" call with what was taken. If the clerk knocks you down in the chase, the clerk stops
+  and the police get a high-priority "Shoplifter held" call at the spot where you lie. It only works with at least 2
+  officers on duty (`minOnDuty`, `jobs`); with fewer, the goods go back on the shelves as you leave. All of it is tuned
+  in `Config.Shoplift` (reaction weights, chase distance and time, the call's chance and delay); `enabled = false`
+  puts the goods back on the shelves instead.
+- **A shopper in every store.** A second NPC walks from rack to rack. When the clerk is attacked or killed, by any
+  weapon, knife and fists included, the shopper cowers and calls the police ("Clerk attacked" / "Clerk down", high
+  priority). Tuned in `Config.Shopper`.
+- **A closed store.** The clerk can only be hurt while reacting. Kill the clerk and that store closes for
+  `Config.ClerkDownMinutes` (10) until a new clerk takes over; the shopper leaves. A server restart keeps it closed.
 - **About 40 groceries.** Drinks, snacks, food, home goods and cigarettes, each with its picture. What food and drinks
   restore (hunger, thirst) is changed in game in `/whip` → Economy → Items.
 - **Safe by design.** Every request is a WHIP `SecureEvent` with rate limits and checked parameters. The client sends
