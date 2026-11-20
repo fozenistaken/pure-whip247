@@ -16,6 +16,7 @@ version '1.1.0'
 
 dependency 'whip_core'
 whip_requires '1.0'
+whip_updates 'fozenistaken/pure-whip247'
 
 shared_scripts {
     '@whip_core/lib/satellite.lua',

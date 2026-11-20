@@ -1,5 +1,7 @@
 # whip-247 by PureFX
 
+> Works on **FiveM Legacy** and **GTA V Enhanced**: each release has a download for each.
+
 Every 24/7 and LTD store in GTA V, shopped by hand on the [WHIP](https://whipfx.net) FiveM framework. Take the goods
 off the game's own racks, carry them in your hands or in a wire basket from the stack by the door, and pay the clerk
 in cash or by card. No shop screen: you walk the aisles.
@@ -53,7 +55,9 @@ The trailer is rendered in Blender from the resource's own animations, in GTA's 
 ## Install
 
 1. Requires `whip_core` 1.0 or newer, and `whip_media_props` (installed with WHIP) for the item pictures.
-2. Put the folder in your resources **named `pure-247`** (the GitHub ZIP unpacks as `pure-whip247-main`: rename it).
+2. Download `pure-247-legacy.zip` (FiveM Legacy) or `pure-247-enhanced.zip` (GTA V Enhanced) from
+   [Releases](https://github.com/fozenistaken/pure-whip247/releases/latest). Each unpacks as `pure-247`; keep that
+   name (a GitHub source ZIP unpacks as `pure-whip247-main`: rename it).
    Items, events and prompts are named after the folder.
 3. Add `ensure pure-247` after WHIP's lines in `server.cfg`, and start the server.
 
@@ -74,7 +78,7 @@ Everything is in `config.lua`, each setting with a comment:
 ## Licence
 
 [CC BY-NC-SA 4.0](LICENSE.md): use it and change it, keep the credit, share changes under the same licence, and do not
-sell it. The basket model and the animation clips in `stream/` are made from GTA V's own assets and belong to Rockstar
+sell it. The basket model and the animation clips in `stream/` and `stream_enhanced/` are made from GTA V's own assets and belong to Rockstar
 Games; see [CREDITS.md](CREDITS.md).
 
 By fozen ([PureFX](https://purefx.dev)).
