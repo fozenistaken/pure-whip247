@@ -4,10 +4,10 @@ Every 24/7 and LTD store in GTA V, shopped by hand on the [WHIP](https://whipfx.
 off the game's own racks, carry them in your hands or in a wire basket from the stack by the door, and pay the clerk
 in cash or by card. No shop screen: you walk the aisles.
 
-[![whip-247 trailer: click to watch](docs/trailer.jpg)](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/whip-247-trailer.mp4)
+https://github.com/user-attachments/assets/e490c04f-1520-4981-a981-38f74e453cd8
 
-**[▶ Watch the trailer](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/whip-247-trailer.mp4)**
-(rendered in Blender from the resource's own animations, in GTA's own 24/7)
+The trailer is rendered in Blender from the resource's own animations, in GTA's own 24/7.
+[Download it in 1080p](https://github.com/fozenistaken/pure-whip247/releases/download/v1.0.0/whip-247-trailer.mp4).
 
 | Take a basket off the stack | Pick goods off the racks |
 |---|---|
