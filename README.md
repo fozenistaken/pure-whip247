@@ -1,6 +1,7 @@
 # whip-247 by PureFX
 
-> Works on **FiveM Legacy** and **GTA V Enhanced**: each release has a download for each.
+> Works on **FiveM Legacy** and **GTA V Enhanced**: each release has a download for each. A git clone is the Legacy
+> build; on Enhanced use `pure-247-enhanced.zip`.
 
 Every 24/7 and LTD store in GTA V, shopped by hand on the [WHIP](https://whipfx.net) FiveM framework. Take the goods
 off the game's own racks, carry them in your hands or in a wire basket from the stack by the door, and pay the clerk
@@ -78,7 +79,7 @@ Everything is in `config.lua`, each setting with a comment:
 ## Licence
 
 [CC BY-NC-SA 4.0](LICENSE.md): use it and change it, keep the credit, share changes under the same licence, and do not
-sell it. The basket model and the animation clips in `stream/` and `stream_enhanced/` are made from GTA V's own assets and belong to Rockstar
+sell it. The basket model and the animation clips in `stream/` and `enhanced/` are made from GTA V's own assets and belong to Rockstar
 Games; see [CREDITS.md](CREDITS.md).
 
 By fozen ([PureFX](https://purefx.dev)).

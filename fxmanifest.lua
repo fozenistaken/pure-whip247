@@ -12,7 +12,7 @@ name 'pure-247'
 description 'Pure 24/7 by PureFX: every 24/7 store on WHIP, shopped by hand (racks, basket, clerk and checkout) with groceries'
 author 'fozen'
 website 'https://purefx.dev'
-version '1.1.0'
+version '1.1.1'
 
 dependency 'whip_core'
 whip_requires '1.0'
